@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  flashout_api:
+    image: rg.fr-par.scw.cloud/api-code-samples-vscode/vscode_api:2.0.0
+    command: /bin/bash -c "while sleep 1000; do :; done"
+    working_dir: /home/dev
+    networks:
+      - api-network
+    volumes:
+      - ./:/home/dev:cached
+      
+networks:
+  api-network:
+    driver: bridge
+    name: api-network
