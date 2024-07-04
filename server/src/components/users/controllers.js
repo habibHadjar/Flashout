@@ -1,26 +1,90 @@
-const User = require('../../models/User');
+require('dotenv').config()
 
-const getAll = async (req, res) => {
+const User = require('../../models/User');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const signup = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).send();
+  }
+
   try {
-    const users = await User.findAll();
-    res.json(users);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    const emailAvaibility = await User.findOne({ where: { email } });
+    if (emailAvaibility) {
+      return res.status(409).send('Email not available');
+    }
+
+    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10);
+    const salt = await bcrypt.genSalt(saltRounds);
+    const hash = await bcrypt.hash(password, salt);
+
+    const newUser = {
+      email,
+      password: hash,
+    };
+
+    const user = await User.create(newUser);
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '3 hours' }
+    );
+
+    res.status(200).send({ tokenId: token, user });
+  } catch (error) {
+    return res.status(500).send(error);
   }
 };
 
-const createUser = async (req, res) => {
+const signin = async (req, res) => {
+  const { email, password } = req.body;
+
   try {
-    const newUser = await User.create(req.body);
-    res.json(newUser);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(401).send();
+    }
+
+    const isSamePassword = await bcrypt.compare(password, user.password);
+
+    if (!isSamePassword) {
+      return res.status(401).send();
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '3 hours' }
+    );
+
+    res.status(200).send({ token, user });
+  } catch (error) {
+    res.status(401).send({});
+  }
+};
+
+const remove = async (req, res) => {
+  try {
+    await User.destroy({ where: { id: req.params.id } });
+    res.status(200).send([]);
+  } catch (error) {
+    res.status(500).send(error);
   }
 };
 
 module.exports = {
-  getAll,
-  createUser,
+  signup,
+  signin,
+  remove,
 };
+
