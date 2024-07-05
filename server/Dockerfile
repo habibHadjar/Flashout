@@ -8,6 +8,6 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3000
+RUN npm install --only=dev
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "start"]

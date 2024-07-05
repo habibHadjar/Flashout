@@ -1,10 +1,12 @@
-require('dotenv').config()
+import { Request, Response } from 'express';
+import dotenv from 'dotenv';
+import User from '../../models/User';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-const User = require('../../models/User');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+dotenv.config();
 
-const signup = async (req, res) => {
+export const signup = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -12,12 +14,12 @@ const signup = async (req, res) => {
   }
 
   try {
-    const emailAvaibility = await User.findOne({ where: { email } });
-    if (emailAvaibility) {
+    const emailAvailability = await User.findOne({ where: { email } });
+    if (emailAvailability) {
       return res.status(409).send('Email not available');
     }
 
-    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10);
+    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10);
     const salt = await bcrypt.genSalt(saltRounds);
     const hash = await bcrypt.hash(password, salt);
 
@@ -26,13 +28,13 @@ const signup = async (req, res) => {
       password: hash,
     };
 
-    const user = await User.create(newUser);
+    const user = await User.create(newUser) as any;
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || '',
       { expiresIn: '3 hours' }
     );
 
@@ -42,11 +44,11 @@ const signup = async (req, res) => {
   }
 };
 
-const signin = async (req, res) => {
+export const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email } }) as any;
 
     if (!user) {
       return res.status(401).send();
@@ -63,7 +65,7 @@ const signin = async (req, res) => {
         id: user.id,
         email: user.email,
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || '',
       { expiresIn: '3 hours' }
     );
 
@@ -73,7 +75,7 @@ const signin = async (req, res) => {
   }
 };
 
-const remove = async (req, res) => {
+export const remove = async (req: Request, res: Response) => {
   try {
     await User.destroy({ where: { id: req.params.id } });
     res.status(200).send([]);
@@ -81,10 +83,3 @@ const remove = async (req, res) => {
     res.status(500).send(error);
   }
 };
-
-module.exports = {
-  signup,
-  signin,
-  remove,
-};
-

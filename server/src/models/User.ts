@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const db = require('../services/db');
+import { DataTypes } from 'sequelize';
+import db from '../services/db';
 
 const User = db.sequelize.define('Users', {
   id: {
@@ -43,4 +43,4 @@ const User = db.sequelize.define('Users', {
   timestamps: true,
 });
 
-module.exports = User;
+export default User;
