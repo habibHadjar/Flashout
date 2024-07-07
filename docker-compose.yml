@@ -11,15 +11,27 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks: 
+      - api-network
 
   api:
     restart: always
     build:
       context: ./server
-    ports:
-      - "3000:3000"
+    command: /bin/bash -c "while sleep 1000; do :; done"
+    working_dir: /usr/src/app
+    networks:
+      - api-network
+    volumes:
+      - ./:/usr/src/app:cached
     depends_on:
       - postgres
-
+    
 volumes:
   postgres_data:
+
+
+networks:
+  api-network:
+    driver: bridge
+    name: api-network
