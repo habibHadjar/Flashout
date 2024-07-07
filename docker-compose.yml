@@ -23,7 +23,7 @@ services:
     networks:
       - api-network
     volumes:
-      - ./:/usr/src/app:cached
+      - ./server:/usr/src/app:cached
     depends_on:
       - postgres
     
