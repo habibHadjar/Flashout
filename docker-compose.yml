@@ -16,8 +16,9 @@ services:
     restart: always
     build:
       context: ./server
-    ports:
-      - "3000:3000"
+    working_dir: /usr/src/app
+    volumes:
+      - ./server:/usr/src/app:cached
     depends_on:
       - postgres
 
